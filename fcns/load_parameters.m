@@ -19,7 +19,7 @@ elseif(strcmp(type_scene,'microscopy_GFP'))
     
     data_dir = 'GFP_1';  
     params_step1 = struct('is_diffuser',0,'tau',2,'miniter',1,'maxiter',10,'stopcriterion',3,'tolerance',1e-4);
-    params_step2 = struct('siz_filt',1000,'siz_upper',400*400,'B',0,'stretch',0);
+    params_step2 = struct('siz_filt',400,'siz_upper',400*400,'B',0,'stretch',0);
     params_step3 = struct('tau',0.86,'miniter',1,'maxiter',10,'stopcriterion',3,'tolerance',1e-12,'t_r',60,'B_sc',0.0);
     params_plot = struct('min_I',0,'max_I',10,'min_L',0,'max_L',3,'cmp','hot');
 
@@ -27,7 +27,7 @@ elseif(strcmp(type_scene,'microscopy_GFPmCherry'))
     
     data_dir = 'GFP-mCherry_GFP-channel_40MHz_2';  
     params_step1 = struct('is_diffuser',0,'tau',2,'miniter',1,'maxiter',10,'stopcriterion',3,'tolerance',1e-4);
-    params_step2 = struct('siz_filt',1000,'siz_upper',400*400,'B',0,'stretch',0);
+    params_step2 = struct('siz_filt',400,'siz_upper',400*400,'B',0,'stretch',0);
     params_step3 = struct('tau',0.72,'miniter',1,'maxiter',10,'stopcriterion',3,'tolerance',1e-12,'t_r',60,'B_sc',0.0);
     params_plot = struct('min_I',0,'max_I',10,'min_L',0,'max_L',3,'cmp','hot');
     
