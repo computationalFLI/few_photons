@@ -1,4 +1,4 @@
-fprintf('Parsing data... ')
+fprintf('Parsing data...\n')
 
 % C_raw, LT_raw:
 % raw intensity and lifetime computed using pixelwise statistics
@@ -6,7 +6,7 @@ fprintf('Parsing data... ')
 load(['data/' data_dir]);
 
 % initialization
-if(strcmp(type_scene,'standoff_sensing_circles') || strcmp(type_scene,'standoff_sensing_MIT'))
+if(strcmp(type_scene,'standoff_sensing_circles'))
     
     [nr,nc] = size(data_bin);
     C_raw = zeros(nr,nc);
@@ -86,4 +86,4 @@ end
    
 ppp_scene = mean(C_raw(:));
 [nr,nc] = size(C_raw);
-fprintf([' ppp = ' num2str(ppp_scene) '\n']);
+fprintf(['mean number of photons per pixel = ' num2str(ppp_scene) '\n']);

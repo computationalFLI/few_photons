@@ -1,11 +1,11 @@
 fprintf('Executing step 1 of computational framework... \n');
 
-if(strcmp(type_scene,'standoff_sensing_circles') || strcmp(type_scene,'standoff_sensing_MIT'))
+if(params_step1.is_diffuser==1)
     % activate non-trivial convolution kernel
     kernel = fspecial('gaussian',20,0.8); %a 20X20 kernal, sigma=0.8=0.8*180/3.14=45 degree
     A = @(x) conv2(x,kernel,'same');
     AT = @(x) conv2(x,kernel,'same');
-else
+elseif(params_step1.is_diffuser==0)
     A = @(x) x;
     AT = @(x) x;
 end

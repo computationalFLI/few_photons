@@ -28,7 +28,7 @@ INVLT_hat = SPIRALTAP_FLIM(Y,A_lifetime,params_step3.tau,...
 LT_hat = 1./INVLT_hat;
 LT_hat_filt_temp = LT_hat;
 LT_hat_filt_temp(~M) = nan;
-
+% optional bg filtering
 C_sc = C_hat_filt;
 A_sc = max(C_sc-params_step3.B_sc*params_step3.t_r,eps);
 LT_hat_filt = max((LT_hat_filt_temp.*C_sc-params_step3.B_sc*(0.5*params_step3.t_r^2))./A_sc,eps);
