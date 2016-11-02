@@ -6,7 +6,7 @@
 % R.S.Saleeb, Y.Chen, I.Coropceanu, P.A.Dalgarno
 % F.N.C.Wong, M.G.Bawendi, V.K.Goyal, and J.H.Shapiro
 
-% implementation uses variants of SPIRAL-TAP by
+% Implementation uses variants of SPIRAL-TAP by
 % Z.T.Harmany, R.F.Marcia, and R.M.Willett
 % available online -- http://drz.ac/code/spiraltap/
 
@@ -19,8 +19,9 @@ clc; clear; close all;
 %   'microscopy_GFP'    
 %   'microscopy_GFPmCherry'
 %   'standoff_sensing_circles'   
+%   'standoff_sensing_MIT_logo'   
 
-type_scene = 'microscopy_GFP';  
+type_scene = 'standoff_sensing_circles';  
 
 %%
 %% Run computational algorithm

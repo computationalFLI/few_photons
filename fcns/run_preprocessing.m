@@ -27,6 +27,27 @@ if(strcmp(type_scene,'standoff_sensing_circles'))
     end
     LT_raw = LT_bin_raw*bin2ns;
     
+elseif(strcmp(type_scene,'standoff_sensing_MIT_logo'))
+    
+    [nr,nc] = size(data_bin);
+    C_raw = zeros(nr,nc);
+    LT_bin_raw = zeros(nr,nc);
+    T_raw = cell(nr,nc);
+    M_invalid = zeros(nr,nc);
+    for i=1:nr
+        for j=1:nc
+            vf = data_frame{i,j};
+            vt = data_bin{i,j};
+            inds = vf<num_frames;
+            ts = vt(inds);
+            C_raw(i,j) = sum(inds);
+            LT_bin_raw(i,j) = mean(ts);
+            M_invalid(i,j) = isempty(ts);
+            T_raw{i,j} = ts;        
+        end
+    end
+    LT_raw = LT_bin_raw*bin2ns;
+    
 elseif(strcmp(type_scene,'microscopy_GFP'))
 
     %load('GFP_truth','I_gt','L_gt'); % ground truth for reference
@@ -86,4 +107,4 @@ end
    
 ppp_scene = mean(C_raw(:));
 [nr,nc] = size(C_raw);
-fprintf(['mean number of photons per pixel = ' num2str(ppp_scene) '\n']);
+fprintf(['  mean number of photons per pixel = ' num2str(ppp_scene) '\n']);
