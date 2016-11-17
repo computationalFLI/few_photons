@@ -1,5 +1,5 @@
 
-function [x, varargout] = SPIRALTAP_FLIM(y, cc, A, tau, varargin)
+function [x, varargout] = SPIRALTAP_FLIM(y, A, tau, varargin)
 % ==== Set default/initial parameter values ====
 % ---- All Methods ----
 verbose = 0;
@@ -418,7 +418,7 @@ Ax = A(x);
 alpha = alphainit;
 Axprevious = Ax;
 xprevious = x;
-grad = computegrad(y,cc,Ax,AT,noisetype,logepsilon);
+grad = computegrad(y,Ax,AT,noisetype,logepsilon);
 
 % Prealocate arrays for storing results
 % Initialize cputime and objective empty anyway (avoids errors in subfunctions):
@@ -430,7 +430,7 @@ if savecputime
 end
 if saveobjective
     objective = zeros(maxiter+1,1);
-    objective(iter) = computeobjective(x,y,cc,Ax,tau,noisetype,logepsilon,penalty,WT);
+    objective(iter) = computeobjective(x,y,Ax,tau,noisetype,logepsilon,penalty,WT);
 end
 if savereconerror
     reconerror = zeros(maxiter+1,1);
@@ -504,7 +504,7 @@ while (iter <= miniter) || ((iter <= maxiter) && not(converged))
                     normsqdx = sum( dx(:).^2 );
                     
                     % --- Compute the resulting objective 
-                    objective(iter + 1) = computeobjective(x,y,cc,Ax,tau,...
+                    objective(iter + 1) = computeobjective(x,y,Ax,tau,...
                         noisetype,logepsilon,penalty,WT);
                         
                     if ( objective(iter+1) <= (maxpastobjective ...
@@ -528,7 +528,7 @@ while (iter <= miniter) || ((iter <= maxiter) && not(converged))
                 Adx = Ax - Adx;
                 normsqdx = sum( dx(:).^2 );
                 if saveobjective
-                    objective(iter + 1) = computeobjective(x,y,cc,Ax,tau,...
+                    objective(iter + 1) = computeobjective(x,y,Ax,tau,...
                         noisetype,logepsilon,penalty,WT);
                 end
                     
@@ -548,7 +548,7 @@ while (iter <= miniter) || ((iter <= maxiter) && not(converged))
     end
 
     % Needed for next iteration and also termination criteria
-    grad = computegrad(y,cc,Ax,AT,noisetype,logepsilon);
+    grad = computegrad(y,Ax,AT,noisetype,logepsilon);
 
     converged = checkconvergence(iter,miniter,stopcriterion,tolerance,...
                         dx, x, cputime(iter+1), objective);
@@ -660,14 +660,14 @@ end
 % =========================
 % = Gradient Computation: =
 % =========================
-function grad = computegrad(y,cc,Ax,AT,noisetype,logepsilon)
+function grad = computegrad(y,Ax,AT,noisetype,logepsilon)
     % Perhaps change to varargin 
     switch lower(noisetype)
         case 'poisson'
             grad = AT(1 - (y./(Ax + logepsilon)));
         case 'exponential'
-            mm = (y==-1);
-            grad = cc.*AT(y - (1./(Ax + logepsilon)));
+            mm = y==0;
+            grad = AT(y - (1./(Ax + logepsilon)));
             grad(mm) = 0;
         case 'gaussian'
             grad = AT(Ax - y);
@@ -677,7 +677,7 @@ end
 % ==========================
 % = Objective Computation: =
 % ==========================
-function objective = computeobjective(x,y,cc,Ax,tau,noisetype,logepsilon,...
+function objective = computeobjective(x,y,Ax,tau,noisetype,logepsilon,...
     penalty,varargin)
 % Perhaps change to varargin 
 % 1) Compute log-likelihood:
@@ -688,8 +688,8 @@ switch lower(noisetype)
     case 'gaussian'
         objective = sum( (y(:) - Ax(:)).^2)./2;
     case 'exponential'
-        mm = (y==-1);
-        precompute = cc.*(Ax.*y - log(Ax + logepsilon));
+        mm = y==0;
+        precompute = Ax.*y - log(Ax + logepsilon);
         objective = sum(precompute(~mm));
 end
 % 2) Compute Penalty:

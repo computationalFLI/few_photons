@@ -1,5 +1,112 @@
+% =============================================================================
+% =        SPIRAL:  Sparse Poisson Intensity Reconstruction Algorithms        =
+% =                                Version 1.0                                =
+% =============================================================================
+% =    Copyright 2009, 2010                                                   =
+% =    Zachary T. Harmany*, Roummel F. Marcia**, Rebecca M. Willett*          =
+% =        *  Department of Electrical and Computer Engineering               =
+% =           Duke University                                                 =
+% =           Durham, NC 27708, USA                                           =
+% =       **  School of Natural Sciences                                      =
+% =           University of California, Merced                                =
+% =           Merced, CA 95343, USA                                           =
+% =                                                                           =
+% =    Corresponding author: Zachary T. Harmany (zth@duke.edu)                =
+% ============================================================================= 
+%
+% =============================================================================
+% =                               Documentation                               =
+% =============================================================================
+% Syntax:
+%   [x, optionalOutputs] = SPIRALTAP(y, A, tau, optionalInputs)
+% 
+%   More details and supporting publications are 
+%   available on the SPIRAL Toolbox homepage
+%   http://www.ee.duke.edu/~zth/spiral/
+% 
+% =============================================================================
+% =                                  Inputs                                   =
+% =============================================================================
+% Required Inputs:
+%	y               Degraded observations.  For this documenation, we say
+%                   that y has m total elements.
+%
+%   A               Sensing / observation matrix.  For this documentation, 
+%                   we say that A is an m x n matrix.  A could also be a
+%                   function call A() that computes matrix-vector products
+%                   such that A(x) = A*x where x has n total elements.  In 
+%                   this case one must also specify a function call AT() 
+%                   using the 'AT' option that computes matrix-vector 
+%                   products with the adjoint of A such that AT(x) = A'*x.  
+%
+%   tau             Regularization parameter that trades off the data fit
+%                   (negative log-likelihood) with the regularization.
+%                   The regularization parameter can either be a
+%                   nonnegative real scalar or (for all methods except the
+%                   total variation penalty) have n nonnegative real 
+%                   elements which allows for nonuniform penalization 
+%                   schemes. 
+%           
+% Optional Inputs:
+% If one were to only input y, A, and tau into the algorithm, there are 
+% many necessary assumptions as to what to do with the inputs.  By default
+% SPIRAL assumes that:
+%   - y contains Poisson realizations of A*f, where f is the true underlying
+%     signal (to be estimated),
+%   - the penalty is the l_1 norm of x (i.e., we promote sparsity in the 
+%     canonical basis.
+% This default behavior can be modified by providing optional inputs.
+%  
+% =============================================================================
+% =                                  Outputs                                  =
+% =============================================================================
+% Required Outputs:
+%   x               Reconstructed signal.  For this documentation, we assume
+%                   x has n total elements.  That is, it is of size compatable
+%                   with the given A matrix/function call.  
+% 
+% Optional Outputs:
+%   The optional outputs are in the following order:
+%       optionalOutputs = [iter, objective, reconerror, cputime, solutionpath]
+%
+%   iter            The total number of iterations performed by the 
+%                   algorithm.  Clearly this number will be between miniter
+%                   and maxiter and will depend on the chosen stopping
+%                   criteria. 
+%
+%   objective       The evolution of the objective function with the number
+%                   of iterations.  The initial value of the objective
+%                   function is stored in objective(1), and hence the 
+%                   length of objective will be iter + 1.
+%
+%   reconerror      The evolution of the specified error metric with the
+%                   number of iterations.  The reconstruction error can
+%                   only be computed if the true underlying signal or image
+%                   is provided using the 'TRUTH' option.  The error
+%                   corresponding to the initial value is stored in
+%                   reconerror(1), and hence the length of reconerror will
+%                   be iter + 1.
+%                   
+%   cputime         Keeps track of the total elapsed time to reach each
+%                   iteration.  This provides a better measure of the
+%                   computational cost of the algorithm versus counting
+%                   the number of iterations.  The clock starts at time
+%                   cputime(1) = 0 and hence the length of cputime will
+%                   also be iter + 1.
+%
+%   solutionpath    Provides a record of the intermediate iterates reached
+%                   while computing the solution x.  Both the "noisy" step
+%                   solutionpath.step and the "denoised" iterate
+%                   solutionpath.iterate are saved.  The initialialization
+%                   for the algorithm is stored in solutionpath(1).iterate.
+%                   Since there is no corresponding initial step, 
+%                   solutionpath(1).step contains all zeros.  Like all 
+%                   the other output variables, the length of solutionpath
+%                   will be iter + 1.
+%
 
-function [x, varargout] = SPIRALTAP_FLIM(y, cc, A, tau, varargin)
+
+function [x, varargout] = SPIRALTAP(y, A, tau, varargin)
 % ==== Set default/initial parameter values ====
 % ---- All Methods ----
 verbose = 0;
@@ -113,7 +220,7 @@ end
 
 % ---- check the validity of the input parameters ----
 % NOISETYPE:  For now only two options are available 'Poisson' and 'Gaussian'.
-if sum( strcmpi(noisetype,{'poisson','gaussian','exponential'})) == 0
+if sum( strcmpi(noisetype,{'poisson','gaussian'})) == 0
     error(['Invalid setting ''NOISETYPE'' = ''',num2str(noisetype),'''.  ',...
         'The parameter ''NOISETYPE'' may only be ''Gaussian'' or ''Poisson''.'])
 end
@@ -253,6 +360,8 @@ switch lower(noisetype)
     case 'poisson'
         % Ensure that y is a vector of nonnegative counts
         if sum(round(y(:)) ~= y(:)) || (min(y(:)) < 0)
+            %error(['The data ''Y'' must contain nonnegative integer ',...
+            %    'counts when ''NOISETYPE'' = ''Poisson''']);
         end
         % Maybe in future could check to ensure A and AT contain nonnegative
         %   elements, but perhaps too computationally wasteful 
@@ -262,12 +371,6 @@ switch lower(noisetype)
         if recenter
             todo
         end
-    case 'exponential'
-        % Maybe in future could check to ensure A and AT contain nonnegative
-        %   elements, but perhaps too computationally wasteful
-        % Precompute useful quantities:
-        %sqrty = sqrt(y);
-
     case 'gaussian'
         
 end
@@ -418,7 +521,7 @@ Ax = A(x);
 alpha = alphainit;
 Axprevious = Ax;
 xprevious = x;
-grad = computegrad(y,cc,Ax,AT,noisetype,logepsilon);
+grad = computegrad(y,Ax,AT,noisetype,logepsilon);
 
 % Prealocate arrays for storing results
 % Initialize cputime and objective empty anyway (avoids errors in subfunctions):
@@ -430,7 +533,7 @@ if savecputime
 end
 if saveobjective
     objective = zeros(maxiter+1,1);
-    objective(iter) = computeobjective(x,y,cc,Ax,tau,noisetype,logepsilon,penalty,WT);
+    objective(iter) = computeobjective(x,y,Ax,tau,noisetype,logepsilon,penalty,WT);
 end
 if savereconerror
     reconerror = zeros(maxiter+1,1);
@@ -504,7 +607,7 @@ while (iter <= miniter) || ((iter <= maxiter) && not(converged))
                     normsqdx = sum( dx(:).^2 );
                     
                     % --- Compute the resulting objective 
-                    objective(iter + 1) = computeobjective(x,y,cc,Ax,tau,...
+                    objective(iter + 1) = computeobjective(x,y,Ax,tau,...
                         noisetype,logepsilon,penalty,WT);
                         
                     if ( objective(iter+1) <= (maxpastobjective ...
@@ -528,7 +631,7 @@ while (iter <= miniter) || ((iter <= maxiter) && not(converged))
                 Adx = Ax - Adx;
                 normsqdx = sum( dx(:).^2 );
                 if saveobjective
-                    objective(iter + 1) = computeobjective(x,y,cc,Ax,tau,...
+                    objective(iter + 1) = computeobjective(x,y,Ax,tau,...
                         noisetype,logepsilon,penalty,WT);
                 end
                     
@@ -548,7 +651,7 @@ while (iter <= miniter) || ((iter <= maxiter) && not(converged))
     end
 
     % Needed for next iteration and also termination criteria
-    grad = computegrad(y,cc,Ax,AT,noisetype,logepsilon);
+    grad = computegrad(y,Ax,AT,noisetype,logepsilon);
 
     converged = checkconvergence(iter,miniter,stopcriterion,tolerance,...
                         dx, x, cputime(iter+1), objective);
@@ -588,8 +691,6 @@ while (iter <= miniter) || ((iter <= maxiter) && not(converged))
             switch lower(noisetype)
                 case 'poisson'
                     Adx = Adx.*sqrty./(Ax + logepsilon); 
-                case 'exponential'
-                    %Adx = Adx.*sqrty./(Ax + logepsilon); 
                 case 'gaussian'
                     % No need to scale Adx
             end
@@ -660,15 +761,11 @@ end
 % =========================
 % = Gradient Computation: =
 % =========================
-function grad = computegrad(y,cc,Ax,AT,noisetype,logepsilon)
+function grad = computegrad(y,Ax,AT,noisetype,logepsilon)
     % Perhaps change to varargin 
     switch lower(noisetype)
         case 'poisson'
             grad = AT(1 - (y./(Ax + logepsilon)));
-        case 'exponential'
-            mm = (y==-1);
-            grad = cc.*AT(y - (1./(Ax + logepsilon)));
-            grad(mm) = 0;
         case 'gaussian'
             grad = AT(Ax - y);
     end
@@ -677,7 +774,7 @@ end
 % ==========================
 % = Objective Computation: =
 % ==========================
-function objective = computeobjective(x,y,cc,Ax,tau,noisetype,logepsilon,...
+function objective = computeobjective(x,y,Ax,tau,noisetype,logepsilon,...
     penalty,varargin)
 % Perhaps change to varargin 
 % 1) Compute log-likelihood:
@@ -687,10 +784,6 @@ switch lower(noisetype)
         objective = sum(Ax(:)) - sum(precompute(:));
     case 'gaussian'
         objective = sum( (y(:) - Ax(:)).^2)./2;
-    case 'exponential'
-        mm = (y==-1);
-        precompute = cc.*(Ax.*y - log(Ax + logepsilon));
-        objective = sum(precompute(~mm));
 end
 % 2) Compute Penalty:
 switch lower(penalty)

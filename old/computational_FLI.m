@@ -23,15 +23,13 @@ clc; clear; close all;
 
 type_scene = 'microscopy_GFP';  
 
-
-addpath(genpath('data'))
-addpath(genpath('fcns'))
-
-
 %%
 %% Run computational algorithm
 
 clc;
+
+addpath(genpath('data'))
+addpath(genpath('fcns'))
 
 load_parameters();
 run_preprocessing();
@@ -40,7 +38,6 @@ run_step_2(); % fluorophore mask estimation
 run_step_3(); % data filtering using mask
 run_step_4(); % fluorescence lifetime reconstruction
 fprintf('Finished running computational framework! \n')
-
 
 %%
 %% Make plots
