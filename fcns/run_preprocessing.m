@@ -84,14 +84,13 @@ elseif(strcmp(type_scene,'microscopy_GFPmCherry'))
 
     ind_p = find(sum_hist == max(sum_hist)); % Find the peak of the histogram
 
-    T=100;
-    cut=ind_p+T; % selecting the first 10-ns valid data
+    T=88;
+    cut=ind_p+T; % selecting the first 11-ns valid data
     y = hist(:,ind_p:cut); % this is for CMM estimations
     size_y = size(y);
 
     Threshold = 1; % for setting dark pixels
     t = 0.5:1:size_y(2)-0.5; % for CMM estimations
-
     s_y = sum(y')'+1e-15; % +1e-15 is to avoid NaN
     tau11 = (s_y >= Threshold).*((y*t')./s_y); % mean lifetimes
 
